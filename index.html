@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chatbot</title>
+    <style>
+        #chatbox { width: 100%; height: 300px; border: 1px solid #ccc; overflow-y: scroll; }
+        #input { width: 100%; padding: 10px; }
+    </style>
+</head>
+<body>
+    <div id="chatbox"></div>
+    <input id="input" type="text" placeholder="Type your message..." onkeypress="if(event.key === 'Enter') sendMessage()">
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.7.16.min.js"></script>
+    <script>
+        AWS.config.region = 'us-east-1'; // Replace with your region
+        AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+            IdentityPoolId: 'us-east-1:YOUR_COGNITO_IDENTITY_POOL_ID' // Replace
+        });
+        
+        const lex = new AWS.LexRuntime();
+        const userId = 'user' + Math.random().toString(36).substring(7);
+        
+        function sendMessage() {
+            const input = document.getElementById('input').value;
+            if (!input) return;
+            
+            const chatbox = document.getElementById('chatbox');
+            chatbox.innerHTML += `<p><b>You:</b> ${input}</p>`;
+            
+            const params = {
+                botAlias: '$LATEST',
+                botName: 'YourBotName', // Replace
+                inputText: input,
+                userId: userId
+            };
+            
+            lex.postText(params, (err, data) => {
+                if (err) {
+                    chatbox.innerHTML += `<p><b>Error:</b> ${err}</p>`;
+                } else {
+                    chatbox.innerHTML += `<p><b>Bot:</b> ${data.message}</p>`;
+                }
+                chatbox.scrollTop = chatbox.scrollHeight;
+            });
+            
+            document.getElementById('input').value = '';
+        }
+    </script>
+</body>
+</html>
